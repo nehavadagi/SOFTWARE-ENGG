@@ -9,7 +9,7 @@ def home():
     return jsonify({"message": "Welcome to the Open Media Search API"})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 
