@@ -1,27 +1,36 @@
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+import requests
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/")
-def home():
-    return jsonify({"message": "Welcome to the Open Media Search API"})
+@app.route("/search")
+def search():
+    query = request.args.get("q")
+    if not query:
+        return jsonify({"error": "Missing search query"}), 400
+
+    # Call Openverse API
+    try:
+        url = f"https://api.openverse.engineering/v1/images?q={query}"
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        # Return only the relevant fields
+        results = [
+            {
+                "id": item["id"],
+                "thumbnail": item.get("thumbnail"),
+                "title": item.get("title")
+            }
+            for item in data.get("results", [])
+        ]
+
+        return jsonify({"results": results})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required
-
-app.config["JWT_SECRET_KEY"] = "super-secret"
-jwt = JWTManager(app)
-
-@app.route("/login", methods=["POST"])
-def login():
-    return jsonify(access_token=create_access_token(identity="user"))
-
-from models import db
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
-db.init_app(app)
-with app.app_context():
-    db.create_all()
+    app.run(host="0.0.0.0", port=5000)
