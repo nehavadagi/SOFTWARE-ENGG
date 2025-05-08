@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: backend
+    env: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: FLASK_ENV
+        value: development
+    autoDeploy: true
+
+  - type: web
+    name: frontend
+    env: docker
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: CHOKIDAR_USEPOLLING
+        value: "true"
+      - key: REACT_APP_API_URL
+        value: https://backend.onrender.com
+    autoDeploy: true
