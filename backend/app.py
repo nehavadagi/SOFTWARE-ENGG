@@ -19,3 +19,9 @@ jwt = JWTManager(app)
 @app.route("/login", methods=["POST"])
 def login():
     return jsonify(access_token=create_access_token(identity="user"))
+
+from models import db
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+db.init_app(app)
+with app.app_context():
+    db.create_all()
