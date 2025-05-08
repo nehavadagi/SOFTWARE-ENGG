@@ -1,17 +1,15 @@
-# Use a slim Python image
-FROM python:3.10-slim
+FROM python:3.9-slim
 
-# Set working directory inside the container
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+COPY requirements.txt .
 
-# Copy the Flask app code to the container
-COPY . .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the port your Flask app will run on
-EXPOSE 5000
+COPY . .
 
-# Run the app
-CMD ["python", "run.py"]
+CMD ["python", "app.py"]
