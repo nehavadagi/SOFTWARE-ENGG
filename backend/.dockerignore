@@ -1,4 +1,33 @@
+# Node.js dependencies
+node_modules
+
+# Python virtual environments
+venv
 __pycache__/
 *.pyc
-venv/
-.env
+*.pyo
+
+# Build artifacts
+dist/
+build/
+
+# Logs
+*.log
+
+# Version control
+.git
+.gitignore
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Ignore all .env files
+.env*
+# But include .env.production
+!.env.production
