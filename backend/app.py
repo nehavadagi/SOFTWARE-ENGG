@@ -10,3 +10,12 @@ def home():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+
+app.config["JWT_SECRET_KEY"] = "super-secret"
+jwt = JWTManager(app)
+
+@app.route("/login", methods=["POST"])
+def login():
+    return jsonify(access_token=create_access_token(identity="user"))
