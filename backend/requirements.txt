@@ -1,6 +1,5 @@
-Flask
-Flask-JWT-Extended
-Flask-CORS
-Flask-SQLAlchemy
-requests
-bcrypt
+Flask==2.1.2
+gunicorn==20.1.0
+python-dotenv==0.20.0
+Pillow==9.1.0
+requests==2.27.1
