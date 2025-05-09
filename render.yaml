@@ -22,5 +22,5 @@ services:
       - key: CHOKIDAR_USEPOLLING
         value: "true"
       - key: REACT_APP_API_URL
-        value: https://backend.onrender.com
+        value: https://backend-j4od.onrender.com
     autoDeploy: true
