@@ -24,4 +24,4 @@ jobs:
 
       - name: Run backend tests
         run: |
-          pytest backend/tests/
+          pytest backend/pytest.py/
