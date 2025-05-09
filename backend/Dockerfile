@@ -1,28 +1,28 @@
-# Use the official Python image as the base
+# 1) Base image
 FROM python:3.10-slim
 
-# Set environment variables
+# 2) Prevent .pyc and buffering
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set work directory
+# 3) Working directory
 WORKDIR /app
 
-# Install system dependencies
+# 4) Install system deps (for bcrypt, etc.)
 RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# 5) Copy & install Python deps
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
-COPY requirements.txt .
+# 6) Copy the rest of the code
+COPY . .
 
-# Expose the port the app runs on
+# 7) Expose Flask port
 EXPOSE 5000
 
-# Run the application
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000"]
+# 8) Launch via Gunicorn for production-style
+CMD ["gunicorn", "run:app", "--bind", "0.0.0.0:5000"]
