@@ -3,8 +3,8 @@ services:
     name: backend
     env: docker
     plan: free
-    dockerfilePath: ./backend/Dockerfile
     dockerContext: backend
+    dockerfilePath: backend/Dockerfile   # no leading ./
     buildCommand: ""
     startCommand: ""
     envVars:
@@ -16,7 +16,8 @@ services:
     name: frontend
     env: docker
     plan: free
-    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: frontend             # ensure the frontend folder is the context
+    dockerfilePath: frontend/Dockerfile
     buildCommand: ""
     startCommand: ""
     envVars:
