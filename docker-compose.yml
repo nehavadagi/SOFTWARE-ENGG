@@ -1,23 +1,29 @@
-version: '3.9'
-
 services:
   backend:
     build: ./backend
     ports:
       - "5000:5000"
-    volumes:
-      - ./backend:/app
     environment:
-      - FLASK_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/media_search_db
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+    depends_on:
+      - mongo
 
   frontend:
     build: ./frontend
     ports:
-      - "3000:80"
-    stdin_open: true
-    tty: true
+      - "3000:3000"
+    depends_on:
+      - backend
     environment:
-      - CHOKIDAR_USEPOLLING=true
-      - REACT_APP_API_URL=http://backend:5000
-    env_file:
-      - ./frontend/.env.docker
+      - REACT_APP_API_URL=http://localhost:5000
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
