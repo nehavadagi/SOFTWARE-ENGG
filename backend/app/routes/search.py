@@ -1,57 +1,91 @@
-from flask import request, jsonify, Blueprint
-from flask_login import current_user
+# backend/search.py
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_optional, get_jwt_identity
+from models import db, SearchHistory
 import requests
-from app import db
-from app.models import SearchHistory
+from datetime import datetime
 
-bp = Blueprint('search', __name__, url_prefix='/api')
+search_bp = Blueprint('search', __name__)
 
-@bp.route('/search')
-def search():
-    # Get and validate parameters
-    query = request.args.get('q', '')
-    license_type = request.args.get('license')
-    image_type = request.args.get('image_type')
-    page = request.args.get('page', 1, type=int)
+OPENVERSE_BASE_URL = "https://api.openverse.engineering/v1"
+
+def build_openverse_query(base_query, filters):
+    query_params = {"q": base_query}
     
-    if not query or len(query.strip()) < 2:
-        return jsonify({'error': 'Query must be at least 2 characters long'}), 400
+    # Add advanced filters
+    if filters.get('license_type'):
+        query_params['license_type'] = filters['license_type']
+    if filters.get('license'):
+        query_params['license'] = filters['license']
+    if filters.get('extension'):
+        query_params['extension'] = filters['extension']
+    if filters.get('size'):
+        query_params['size'] = filters['size']
+    if filters.get('aspect_ratio'):
+        query_params['aspect_ratio'] = filters['aspect_ratio']
+    if filters.get('source'):
+        query_params['source'] = filters['source']
     
-    # Build Openverse API parameters
-    params = {
-        'q': query,
-        'page': page,
-        'page_size': 20
-    }
+    # Pagination
+    if filters.get('page'):
+        query_params['page'] = filters['page']
+    if filters.get('page_size'):
+        query_params['page_size'] = min(filters['page_size'], 50)  # Openverse limit
     
-    if license_type and license_type != 'all':
-        params['license'] = license_type
-    if image_type and image_type != 'all':
-        params['extension'] = image_type
-    
-    # Call Openverse API
+    return query_params
+
+@search_bp.route('/search', methods=['GET'])
+@jwt_optional()
+def search_images():
     try:
+        query = request.args.get('q')
+        if not query:
+            return jsonify({'error': 'Query parameter "q" is required'}), 400
+        
+        # Get advanced filters from request
+        filters = {
+            'license_type': request.args.get('license_type'),
+            'license': request.args.get('license'),
+            'extension': request.args.get('extension'),
+            'size': request.args.get('size'),
+            'aspect_ratio': request.args.get('aspect_ratio'),
+            'source': request.args.get('source'),
+            'page': request.args.get('page', 1, type=int),
+            'page_size': request.args.get('page_size', 20, type=int)
+        }
+        
+        # Build Openverse query
+        openverse_params = build_openverse_query(query, filters)
+        
+        # Make request to Openverse API
         response = requests.get(
-            'https://api.openverse.engineering/v1/images/',
-            params=params,
-            headers={'Accept': 'application/json'},
-            timeout=30
+            f"{OPENVERSE_BASE_URL}/images/",
+            params=openverse_params,
+            headers={'Accept': 'application/json'}
         )
-        response.raise_for_status()
         
-        results = response.json()
+        if response.status_code != 200:
+            return jsonify({'error': 'Openverse API error'}), response.status_code
         
-        # Save to search history if user is authenticated
-        if current_user.is_authenticated:
-            search_history = SearchHistory(
+        data = response.json()
+        
+        # Save search history if user is authenticated
+        user_id = get_jwt_identity()
+        if user_id:
+            search_entry = SearchHistory(
+                user_id=user_id,
                 query=query,
-                search_filters=params,
-                user_id=current_user.id
+                filters=filters,
+                results_count=data.get('result_count', 0)
             )
-            db.session.add(search_history)
+            db.session.add(search_entry)
             db.session.commit()
         
-        return jsonify(results)
+        return jsonify({
+            'results': data.get('results', []),
+            'total_count': data.get('result_count', 0),
+            'filters_applied': filters
+        }), 200
         
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': f'Failed to fetch results: {str(e)}'}), 502
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
