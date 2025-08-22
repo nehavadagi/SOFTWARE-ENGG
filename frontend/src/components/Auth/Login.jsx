@@ -1,69 +1,52 @@
+// frontend/src/components/Auth/Login.js
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext'; // Fixed import path
+import axios from 'axios';
 
-const Login = ({ onSwitchToRegister }) => {
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: ''
-  });
+const Login = ({ onLogin }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    const result = await login(credentials);
-    if (!result.success) {
-      setError(result.error);
+    try {
+      const response = await axios.post('http://localhost:5000/login', {
+        email,
+        password
+      });
+      
+      localStorage.setItem('token', response.data.access_token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      onLogin(response.data.user);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed');
     }
-    setLoading(false);
-  };
-
-  const handleChange = (e) => {
-    setCredentials({
-      ...credentials,
-      [e.target.name]: e.target.value
-    });
   };
 
   return (
-    <div className="auth-form">
+    <div className="auth-container">
       <h2>Login</h2>
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="error">{error}</div>}
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Username:</label>
-          <input
-            type="text"
-            name="username"
-            value={credentials.username}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Password:</label>
-          <input
-            type="password"
-            name="password"
-            value={credentials.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit">Login</button>
       </form>
-      <p>
-        Don't have an account?{' '}
-        <button type="button" onClick={onSwitchToRegister} className="link-button">
-          Register here
-        </button>
-      </p>
+      <button onClick={() => window.location.href = 'http://localhost:5000/auth/google'}>
+        Login with Google
+      </button>
     </div>
   );
 };
