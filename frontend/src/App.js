@@ -1,56 +1,46 @@
 import React, { useState } from 'react';
-import { AuthProvider } from './components/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext'; // Fixed import
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
-import SavedSearches from './components/SavedSearches';
+import Search from './components/Search/Search';
 import './App.css';
 
-const AppContent = () => {
-    const { currentUser, logout } = useAuth();
-    const [authMode, setAuthMode] = useState('login');
-    const [showSaved, setShowSaved] = useState(false);
+const AuthWrapper = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const { user, loading } = useAuth();
 
-    if (!currentUser) {
-        return (
-            <div className="auth-container">
-                {authMode === 'login' ? (
-                    <Login onSwitchToRegister={() => setAuthMode('register')} />
-                ) : (
-                    <Register onSwitchToLogin={() => setAuthMode('login')} />
-                )}
-            </div>
-        );
-    }
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
 
+  if (!user) {
     return (
-        <div className="App">
-            <header>
-                <h1>Openverse Media Search</h1>
-                <div className="user-menu">
-                    <span>Welcome, {currentUser.username}</span>
-                    <button onClick={() => setShowSaved(!showSaved)}>
-                        Saved Searches
-                    </button>
-                    <button onClick={logout}>Logout</button>
-                </div>
-            </header>
-            
-            {showSaved && <SavedSearches />}
-            
-            <div className="search-container">
-                {/* Your existing search functionality will go here */}
-                <p>Search functionality coming soon...</p>
-            </div>
-        </div>
+      <div className="auth-container">
+        {isLogin ? (
+          <Login onSwitchToRegister={() => setIsLogin(false)} />
+        ) : (
+          <Register onSwitchToLogin={() => setIsLogin(true)} />
+        )}
+      </div>
     );
+  }
+
+  return <Search />;
 };
 
 function App() {
-    return (
-        <AuthProvider>
-            <AppContent />
-        </AuthProvider>
-    );
+  return (
+    <AuthProvider>
+      <div className="App">
+        <header className="App-header">
+          <h1>Open License Media Search</h1>
+        </header>
+        <main>
+          <AuthWrapper />
+        </main>
+      </div>
+    </AuthProvider>
+  );
 }
 
 export default App;

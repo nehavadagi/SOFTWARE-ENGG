@@ -9,10 +9,9 @@ services:
       - FLASK_ENV=development
       - DATABASE_URL=sqlite:////app/app.db
       - OPENVERSE_URL=https://api.openverse.engineering
+      - SECRET_KEY=dev-secret-key
     volumes:
       - ./backend:/app
-    depends_on:
-      - db
     command: flask run --host=0.0.0.0 --reload
 
   frontend:
@@ -24,21 +23,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    depends_on:
-      - backend
     stdin_open: true
     tty: true
 
-  db:
-    image: postgres:13
-    environment:
-      - POSTGRES_DB=mediasearch
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+  # SQLite is used for development, so we don't need PostgreSQL
