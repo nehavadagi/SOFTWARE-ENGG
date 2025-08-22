@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext'; // Fixed import path
+import { useAuth } from '../../contexts/AuthContext';
 
 const Register = ({ onSwitchToLogin }) => {
   const [userData, setUserData] = useState({
@@ -17,18 +17,27 @@ const Register = ({ onSwitchToLogin }) => {
     setLoading(true);
     setError('');
 
+    // Client-side validation
     if (userData.password !== userData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
       return;
     }
 
+    if (userData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
     const result = await register(userData);
     if (!result.success) {
-      setError(result.error);
+      setError(result.error || 'Registration failed. Please try again.');
     } else {
       // Registration successful, switch to login
       onSwitchToLogin();
+      // Show success message on login page
+      alert('Registration successful! Please login with your credentials.');
     }
     setLoading(false);
   };
@@ -38,12 +47,25 @@ const Register = ({ onSwitchToLogin }) => {
       ...userData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   return (
     <div className="auth-form">
       <h2>Register</h2>
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="error-message" style={{ 
+          background: '#f8d7da', 
+          color: '#721c24', 
+          padding: '10px', 
+          borderRadius: '4px', 
+          marginBottom: '15px',
+          border: '1px solid #f5c6cb'
+        }}>
+          {error}
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Username:</label>
@@ -53,6 +75,7 @@ const Register = ({ onSwitchToLogin }) => {
             value={userData.username}
             onChange={handleChange}
             required
+            minLength="3"
           />
         </div>
         <div className="form-group">
@@ -73,6 +96,7 @@ const Register = ({ onSwitchToLogin }) => {
             value={userData.password}
             onChange={handleChange}
             required
+            minLength="6"
           />
         </div>
         <div className="form-group">
@@ -83,6 +107,7 @@ const Register = ({ onSwitchToLogin }) => {
             value={userData.confirmPassword}
             onChange={handleChange}
             required
+            minLength="6"
           />
         </div>
         <button type="submit" disabled={loading}>
